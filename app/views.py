@@ -1,12 +1,24 @@
-from .serializers import *
+from django.db.models import Model
+from typing import Type
 from rest_framework import viewsets
+from .models import (
+    Student, Teacher, Course, YearLevel, Section, Subject,
+    Quiz, Exam, Activity,
+    QuizResult, ExamResult, ActivityResult
+)
+from .serializers import (
+    StudentSerializer, TeacherSerializer, CourseSerializer, YearLevelSerializer,
+    SectionSerializer, SubjectSerializer, QuizSerializer, ExamSerializer,
+    ActivitySerializer, QuizResultSerializer, ExamResultSerializer, ActivityResultSerializer
+)
 
-def create_viewset(model_class, serializer_class):
+
+def create_viewset(model_class: Type[Model], serializer_class):
     return type(
         f'{model_class.__name__}ViewSet',
         (viewsets.ModelViewSet,),
         {
-            'queryset': model_class.objects.all(),
+            'queryset': model_class.objects.all(), # type: ignore[attr-defined]
             'serializer_class': serializer_class,
         }
     )

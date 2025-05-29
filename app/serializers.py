@@ -1,13 +1,27 @@
 from rest_framework import serializers
-from .models import *
+
+from .models import (
+    Student, Teacher, Course, YearLevel, Section, Subject,
+    Quiz, Exam, Activity,
+    QuizResult, ExamResult, ActivityResult
+)
 
 
 def create_serializer(model_class):
-    class GenericSerializer(serializers.ModelSerializer):
-        class Meta:
-            model = model_class
-            fields = '__all__'
-    return GenericSerializer
+    serializer_name = f"{model_class.__name__}Serializer"
+
+    serializer_class = type(
+        serializer_name,
+        (serializers.ModelSerializer,),
+        {
+            "Meta": type("Meta", (), {
+                "model": model_class,
+                "fields": "__all__"
+            })
+        }
+    )
+    return serializer_class
+
 
 StudentSerializer = create_serializer(Student)
 TeacherSerializer = create_serializer(Teacher)
