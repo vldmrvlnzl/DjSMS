@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from .models import (
-    Student, Teacher, Course, YearLevel, Section, Subject,
+    Student, Course, YearLevel, Section, Subject,
     Quiz, Exam, Activity,
     QuizResult, ExamResult, ActivityResult
 )
@@ -24,7 +24,6 @@ def create_serializer(model_class):
 
 
 StudentSerializer = create_serializer(Student)
-TeacherSerializer = create_serializer(Teacher)
 CourseSerializer = create_serializer(Course)
 YearLevelSerializer = create_serializer(YearLevel)
 SectionSerializer = create_serializer(Section)
