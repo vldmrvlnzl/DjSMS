@@ -1,14 +1,17 @@
-from django.db import models
 import uuid
+
+from django.db import models
+
 
 # Utility
 def student_profile_image_path(instance, filename):
     return f'student_profiles/student_{instance.id}/{filename}'
 
+
 # =========================
 # Core Academic Structures
 # =========================
-1
+
 class Course(models.Model):
     """Represents a degree or program."""
     name = models.CharField(max_length=100)
@@ -23,6 +26,7 @@ class Course(models.Model):
     def __str__(self):
         return f"{self.name} ({self.code})"
 
+
 class YearLevel(models.Model):
     """Represents a year level in a course."""
     year = models.PositiveSmallIntegerField(unique=True)
@@ -35,6 +39,7 @@ class YearLevel(models.Model):
 
     def __str__(self):
         return f"Year {self.year}"
+
 
 class Section(models.Model):
     """Represents a section within a year level."""
@@ -49,6 +54,7 @@ class Section(models.Model):
     def __str__(self):
         return f"Section {self.section}"
 
+
 class Subject(models.Model):
     """
     Represents a subject taught in a course.
@@ -56,8 +62,8 @@ class Subject(models.Model):
     - Subject code is unique within a course.
     """
     course = models.ForeignKey(
-        Course, 
-        on_delete=models.CASCADE, 
+        Course,
+        on_delete=models.CASCADE,
         related_name='subjects',
         help_text="Course to which this subject belongs."
     )
@@ -74,6 +80,7 @@ class Subject(models.Model):
     def __str__(self):
         return f"{self.name} ({self.code}) - {self.course.code}"
 
+
 # =========================
 # Student Model
 # =========================
@@ -87,7 +94,8 @@ class Student(models.Model):
     last_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     date_of_birth = models.DateField()
-    profile_image = models.ImageField(upload_to=student_profile_image_path, default='default_profile.jpg', blank=True, null=True)
+    profile_image = models.ImageField(upload_to=student_profile_image_path, default='default_profile.jpg', blank=True,
+                                      null=True)
     course = models.ForeignKey(Course, on_delete=models.PROTECT, null=True, blank=True, related_name='students')
     year_level = models.ForeignKey(YearLevel, on_delete=models.PROTECT, null=True, blank=True, related_name='students')
     section = models.ForeignKey(Section, on_delete=models.PROTECT, null=True, blank=True, related_name='students')
@@ -102,6 +110,7 @@ class Student(models.Model):
         middle = f" {self.middle_name}" if self.middle_name else ""
         return f"{self.first_name}{middle} {self.last_name} ({self.email})"
 
+
 # =========================
 # Assessments
 # =========================
@@ -111,30 +120,38 @@ class BaseAssessment(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
     total_marks = models.PositiveIntegerField()
-    date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         abstract = True
 
+    def clean(self):
+        super().clean()
+        if self.total_marks <= 0:
+            raise ValueError("Total marks must be greater than zero.")
+
     def __str__(self):
         return f"{self.title} ({self.subject})"
+
 
 class Quiz(BaseAssessment):
     """Quiz assessment."""
     pass
 
+
 class Exam(BaseAssessment):
     """Exam assessment."""
     pass
 
+
 class Activity(BaseAssessment):
     """Activity assessment."""
-    description = models.TextField()
+    description = models.TextField(blank=True, help_text="Description of the activity.")
 
     def __str__(self):
         return f"{self.title} ({self.subject})"
+
 
 # =========================
 # Assessment Results
@@ -150,8 +167,13 @@ class QuizResult(models.Model):
         unique_together = ('quiz', 'student')
         ordering = ['-graded_at']
 
+    def clean(self):
+        if self.score > self.quiz.total_marks:
+            raise ValueError("Score cannot exceed total marks of the quiz total marks")
+
     def __str__(self):
         return f"{self.student} - {self.quiz.title}: {self.score}"
+
 
 class ExamResult(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE)
@@ -163,8 +185,17 @@ class ExamResult(models.Model):
         unique_together = ('exam', 'student')
         ordering = ['-graded_at']
 
+    def clean(self):
+        if self.score > self.exam.total_marks:
+            raise ValueError("Score cannot exceed total marks of the exam.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.student} - {self.exam.title}: {self.score}"
+
 
 class ActivityResult(models.Model):
     activity = models.ForeignKey(Activity, on_delete=models.CASCADE)
@@ -175,6 +206,14 @@ class ActivityResult(models.Model):
     class Meta:
         unique_together = ('activity', 'student')
         ordering = ['-graded_at']
+
+    def clean(self):
+        if self.score > self.activity.total_marks:
+            raise ValueError("Score cannot exceed total marks of the activity.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.student} - {self.activity.title}: {self.score}"
