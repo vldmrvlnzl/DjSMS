@@ -71,7 +71,12 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 
-CORS_ALLOW_ALL_ORIGINS = True  # Development only
+CORS_ALLOW_ALL_ORIGINS = False  # Development only
+
+CORS_ALLOWED_ORIGINS = [
+    "https://studentmanagementsys.vercel.app",
+    "https://djsms.onrender.com",
+]
 
 WSGI_APPLICATION = 'StudentManagementSystem.wsgi.application'
 
@@ -120,7 +125,6 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
